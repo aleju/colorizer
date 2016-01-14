@@ -1,3 +1,16 @@
+logs/*.net
+logs/*.net.old
+logs/images/*.jpg
+logs/images/*.png
+logs/images_good/*.jpg
+logs/images_good/*.png
+logs/images_bad/*.jpg
+logs/images_bad/*.png
+samples/*.jpg
+samples/*.png
+*_vgg.lua
+*_coco.lua
+
 # Compiled Lua sources
 luac.out
 
