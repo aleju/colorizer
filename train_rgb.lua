@@ -41,8 +41,9 @@ OPT = lapp[[
   --window           (default 3)            window id of sample image
   --seed             (default 1)            seed for the RNG
   --nopretraining                           Whether to deactivate loading of pretrained networks
-  --height           (default 64)
-  --width            (default 64)
+  --height           (default 64)           Height of the training images
+  --width            (default 64)           Width of the training images
+  --dataset          (default "NONE")       Directory that contains *.jpg images
 ]]
 
 NORMALIZE = false
@@ -75,10 +76,12 @@ NOISE_DIM = {1, OPT.height, OPT.width}
 ----------------------------------------------------------------------
 -- get/create dataset
 ----------------------------------------------------------------------
+assert(OPT.dataset ~= "NONE")
 DATASET.setFileExtension("jpg")
 DATASET.setHeight(IMG_DIMENSIONS[2])
 DATASET.setWidth(IMG_DIMENSIONS[3])
-DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/face-generator/dataset/out_aug_64x64"})
+DATASET.setDirs({OPT.dataset})
+--DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/face-generator/dataset/out_aug_64x64"})
 --DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/christmas-generator/dataset/preprocessed/christmas-trees"})
 --DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/christmas-generator/dataset/preprocessed/baubles"})
 --DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/sky-generator/dataset/out_aug_32x64"})
