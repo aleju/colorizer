@@ -155,7 +155,7 @@ function dataset.loadRandomImages(count)
                 uv = result.uv[index]
             }
         end,
-        __len = function(self) return self.scaled:size(1) end
+        __len = function(self) return self.color:size(1) end
     })
 
     return result
