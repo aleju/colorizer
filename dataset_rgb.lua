@@ -126,7 +126,8 @@ function dataset.loadRandomImages(count)
     local images = dataset.loadRandomImagesFromPaths(count)
     local data = torch.FloatTensor(#images, 3, dataset.height, dataset.width)
     for i=1, #images do
-        data[i] = image.scale(images[i], dataset.width, dataset.height)
+        --data[i] = image.scale(images[i], dataset.width, dataset.height)
+        data[i] = images[i]
     end
     local data_yuv = NN_UTILS.rgbToColorSpace(data, "yuv")
 
@@ -175,7 +176,11 @@ function dataset.loadRandomImagesFromPaths(count)
     local images = {}
     for i=1,math.min(shuffle:size(1), count) do
        -- load each image
-       table.insert(images, image.load(dataset.paths[shuffle[i]], 3, "float"))
+       --table.insert(images, image.load(dataset.paths[shuffle[i]], 3, "float"))
+       local fp = dataset.paths[shuffle[i]]
+       local img = image.load(fp, 3, "float")
+       img = image.scale(img, dataset.width, dataset.height)
+       table.insert(images, img)
     end
 
     return images
