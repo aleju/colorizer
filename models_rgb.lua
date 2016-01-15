@@ -5,7 +5,7 @@ require 'cudnn'
 
 local models = {}
 
-function models.create_G32x32(dimensions, cuda)
+function models.create_G(dimensions, cuda)
     local model = nn.Sequential()
 
     model:add(nn.JoinTable(2, 2))
@@ -51,7 +51,7 @@ function models.create_G32x32(dimensions, cuda)
     return model
 end
 
-function models.create_G32x32b(dimensions, cuda)
+function models.create_G_b(dimensions, cuda)
     local model = nn.Sequential()
 
     model:add(nn.JoinTable(2, 2))
@@ -109,7 +109,7 @@ function models.create_G32x32b(dimensions, cuda)
     return model
 end
 
-function models.create_G32x32c(dimensions, cuda)
+function models.create_G_c(dimensions, cuda)
     local model = nn.Sequential()
 
     model:add(nn.JoinTable(2, 2))
@@ -185,7 +185,7 @@ end
 -- @param noiseDim Size of the hidden layer between encoder and decoder.
 -- @returns nn.Sequential
 function models.create_G(dimensions, cuda)
-    return models.create_G32x32c(dimensions, cuda)
+    return models.create_G_c(dimensions, cuda)
 end
 
 -- Creates D.
@@ -193,10 +193,10 @@ end
 -- @param noiseDim Size of the hidden layer between encoder and decoder.
 -- @returns nn.Sequential
 function models.create_D(dimensions, cuda)
-    return models.create_D32x32b(dimensions, cuda)
+    return models.create_D_b(dimensions, cuda)
 end
 
-function models.create_D32x32(dimensions, cuda)
+function models.create_D(dimensions, cuda)
     local model = nn.Sequential()
 
     --model:add(nn.CAddTable())
@@ -254,7 +254,7 @@ function models.create_D32x32(dimensions, cuda)
     return model
 end
 
-function models.create_D32x32b(dimensions, cuda)
+function models.create_D_b(dimensions, cuda)
     local model = nn.Sequential()
 
     --model:add(nn.CAddTable())
