@@ -36,10 +36,6 @@ math.randomseed(OPT.seed)
 torch.manualSeed(OPT.seed)
 cutorch.manualSeed(OPT.seed)
 
--- Image dimensions
-IMG_DIMENSIONS = {3, OPT.height, OPT.width}
-NOISE_DIM = {1, OPT.height, OPT.width}
-
 -- Initialize dataset
 DATASET.setFileExtension("jpg")
 
@@ -47,6 +43,10 @@ DATASET.setFileExtension("jpg")
 function main()
     -- Load all models
     local G, D, height, width, dataset = loadModels()
+
+    -- Image dimensions
+    IMG_DIMENSIONS = {3, height, width}
+    NOISE_DIM = {1, height, width}
 
     DATASET.setHeight(height)
     DATASET.setWidth(width)
@@ -127,15 +127,6 @@ function loadModels()
     local opt_loaded = file.opt
     G:evaluate()
     D:evaluate()
-
-    if OPT.width ~= file.opt.width or OPT.height ~= file.opt.height or OPT.colorSpace ~= file.opt.colorSpace then
-        print(
-            string.format(
-                "[WARNING] colorSpace/height/width mismatch. Loaded network: %s/%d/%d, current settings: %s/%d/%d",
-                file.opt.colorSpace, file.opt.height, file.opt.width, OPT.colorSpace, OPT.height, OPT.width
-            )
-        )
-    end
 
     return G, D, opt_loaded.height, opt_loaded.width, opt_loaded.dataset
 end
