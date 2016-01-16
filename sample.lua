@@ -56,10 +56,6 @@ function main()
         DATASET.setDirs({dataset})
     end
 
-    -- We need these global variables for some methods. Ugly code.
-    --MODEL_G = G
-    --MODEL_D = D
-
     print("Sampling...")
     for run=1,OPT.runs do
         -- save 64 randomly selected images from the training set
@@ -71,8 +67,7 @@ function main()
         end
         image.save(paths.concat(OPT.writeto, string.format('trainset_s1_%04d_base.jpg', run)), toGrid(imagesTrainList, nil, 8))
 
-        -- sample 1024 new images from G
-        --local images = NN_UTILS.createImages(1024, false)
+        -- sample 64 colorizations from G
         local noise = torch.Tensor(64, NOISE_DIM[1], NOISE_DIM[2], NOISE_DIM[3])
         noise:uniform(0, 1)
         local imagesGenerated = G:forward({noise, imagesTrain})
@@ -118,7 +113,7 @@ function toGrid(imagesOriginal, imagesGenerated, nrow)
 end
 
 -- Loads all necessary models/networks and returns them.
--- @returns G, D
+-- @returns G, D, height, width, dataset directory
 function loadModels()
     local file = torch.load(paths.concat(OPT.save, OPT.network))
 
