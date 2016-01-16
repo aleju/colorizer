@@ -105,4 +105,4 @@ To train a network:
 * Open a console in the repository directory and then `th train_rgb.lua --dataset="DATASET_PATH" --height=64 --width=64`, where `DATASET_PATH` is the filepath to the directory containing all your images (must be jpg). `height` and `width` resemble the size of the *generated* images. Your source images in that directory may be larger (e.g. 256x256). Only 32x32 (height x width), 64x64 and 32x48 were tested. Other values might result in errors. Note: Training keeps running until stopped manually with ctrl+c.
 
 To continue a training session use `th train_rgb.lua --dataset="DATSET_PATH" --height=64 --width=64 --network="logs/adversarial.net"`.
-To sample images (i.e. colorize images from the training set) use `th sample.lua --dataset="DATASET_PATH"`.
+To sample images (i.e. colorize images from the training set) use `th sample.lua` (should automatically reuse dataset directory, height and width).
