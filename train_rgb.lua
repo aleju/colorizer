@@ -9,7 +9,6 @@ DATASET = require 'dataset_rgb'
 NN_UTILS = require 'utils.nn_utils'
 MODELS = require 'models_rgb'
 
-
 ----------------------------------------------------------------------
 -- parse command-line options
 OPT = lapp[[
@@ -70,9 +69,6 @@ IMG_DIMENSIONS = {3, OPT.height, OPT.width}
 COND_DIM = {1, OPT.height, OPT.width}
 NOISE_DIM = {1, OPT.height, OPT.width}
 
--- size in values/pixels per input image (channels*height*width)
---INPUT_SZ = IMG_DIMENSIONS[1] * IMG_DIMENSIONS[2] * IMG_DIMENSIONS[3]
-
 ----------------------------------------------------------------------
 -- get/create dataset
 ----------------------------------------------------------------------
@@ -81,22 +77,6 @@ DATASET.setFileExtension("jpg")
 DATASET.setHeight(IMG_DIMENSIONS[2])
 DATASET.setWidth(IMG_DIMENSIONS[3])
 DATASET.setDirs({OPT.dataset})
---DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/face-generator/dataset/out_aug_64x64"})
---DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/christmas-generator/dataset/preprocessed/christmas-trees"})
---DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/christmas-generator/dataset/preprocessed/baubles"})
---DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/sky-generator/dataset/out_aug_32x64"})
---DATASET.setDirs({"/media/aj/ssd2a/nlp/python/git/cat-generator/dataset/out_aug_64x64"})
---[[
-DATASET.setDirs({
-    "/media/aj/grab/ml/datasets/10k_cats/CAT_00",
-    "/media/aj/grab/ml/datasets/10k_cats/CAT_01",
-    "/media/aj/grab/ml/datasets/10k_cats/CAT_02",
-    "/media/aj/grab/ml/datasets/10k_cats/CAT_03",
-    "/media/aj/grab/ml/datasets/10k_cats/CAT_04",
-    "/media/aj/grab/ml/datasets/10k_cats/CAT_05",
-    "/media/aj/grab/ml/datasets/10k_cats/CAT_06"
-})
---]]
 ----------------------------------------------------------------------
 
 -- run on gpu if chosen
@@ -206,6 +186,7 @@ function main()
         }
     }
 
+    -- Whether to normalize the images. Not used for this project.
     if NORMALIZE then
         if NORMALIZE_MEAN == nil then
             TRAIN_DATA = DATASET.loadRandomImages(10000)
@@ -218,10 +199,13 @@ function main()
     end
 
     PLOT_DATA = {}
+
+    -- Noise vectors. Not used for this project.
     if VIS_NOISE_INPUTS == nil then
         VIS_NOISE_INPUTS = NN_UTILS.createNoiseInputs(100)
     end
 
+    -- Example images to use for plotting during training.
     EXAMPLE_IMAGES = DATASET.loadRandomImages(48)
 
     -- training loop
@@ -266,84 +250,16 @@ function saveAs(filename)
     torch.save(filename, {D = MODEL_D, G = MODEL_G, opt = OPT, plot_data = PLOT_DATA, epoch = EPOCH, vis_noise_inputs = VIS_NOISE_INPUTS, normalize_mean=NORMALIZE_MEAN, normalize_std=NORMALIZE_STD})
 end
 
--- Visualizes the current training status via Display (based on gfx.js) in the browser.
--- It shows:
---   Images generated from random noise (the noise vectors are set once at the start of the
---   training, so the images should end up similar at each epoch)
---   Images that were deemed "good" by D
---   Images that were deemed "bad" by D
---   Original images from the training set (as comparison)
--- @param noiseInputs The noise vectors for the random images.
--- @returns void
-function visualizeProgress(modelG, modelD, noiseInputs, trainData)
-    -- deactivate dropout
-    modelG:evaluate()
-    modelD:evaluate()
-
-    -- Generate a synthetic test image as sanity test
-    -- This should be deemed very bad by D
-    local sanityTestImage = torch.Tensor(IMG_DIMENSIONS[1], IMG_DIMENSIONS[2], IMG_DIMENSIONS[3])
-    sanityTestImage:uniform(0.0, 0.50)
-    for i=1,IMG_DIMENSIONS[2] do
-        for j=1,IMG_DIMENSIONS[3] do
-            if i == j then
-                sanityTestImage[1][i][j] = 1.0
-            elseif i % 4 == 0 and j % 4 == 0 then
-                sanityTestImage[1][i][j] = 0.5
-            end
-        end
-    end
-
-    -- Collect original example images from the training set
-    local trainImages = trainData[{{1, 50}, {}, {}, {}}]:clone()
-
-    -- Generate images from G based on the provided noiseInputs
-    local rndImages = NN_UTILS.createImagesFromNoise(noiseInputs)
-
-    -- Place the sanity test image and one original image from the training corpus among
-    -- the random Images. The first should be deemed bad by D, the latter as good.
-    -- Then find good and bad images (according to D) among the randomly generated ones
-    -- Note: has to happen before toRgb() as that would change the color space of the images
-    local rndImagesClone = rndImages:clone()
-    rndImagesClone[rndImagesClone:size(1)-1] = trainImages[1] -- one real face as sanity test
-    rndImagesClone[rndImagesClone:size(1)] = sanityTestImage -- synthetic non-face as sanity test
-    local goodImages, _ = NN_UTILS.sortImagesByPrediction(rndImagesClone, false, 50)
-    local badImages, _ = NN_UTILS.sortImagesByPrediction(rndImagesClone, true, 50)
-
-    if rndImages:ne(rndImages):sum() > 0 then
-        print(string.format("[visualizeProgress] Generated images contain NaNs"))
-    end
-
-    DISP.image(NN_UTILS.toRgb(rndImages, OPT.colorSpace), {win=OPT.window+1, width=IMG_DIMENSIONS[3]*15, title="Generated images (epoch " .. EPOCH .. ")"})
-    DISP.image(NN_UTILS.toRgb(goodImages, OPT.colorSpace), {win=OPT.window+2, width=IMG_DIMENSIONS[3]*15, title="Best samples (first is best) (epoch " .. EPOCH .. ")"})
-    DISP.image(NN_UTILS.toRgb(badImages, OPT.colorSpace), {win=OPT.window+3, width=IMG_DIMENSIONS[3]*15, title="Worst samples (first is worst) (epoch " .. EPOCH .. ")"})
-    DISP.image(NN_UTILS.toRgb(trainImages, OPT.colorSpace), {win=OPT.window+4, width=IMG_DIMENSIONS[3]*15, title="original images from training set"})
-
-    NN_UTILS.saveImagesAsGrid(string.format("%s/images/%d_%05d.png", OPT.save, START_TIME, EPOCH), NN_UTILS.toRgb(rndImages, OPT.colorSpace), 10, 10, EPOCH)
-    NN_UTILS.saveImagesAsGrid(string.format("%s/images_good/%d_%05d.png", OPT.save, START_TIME, EPOCH), NN_UTILS.toRgb(goodImages, OPT.colorSpace), 7, 7, EPOCH)
-    NN_UTILS.saveImagesAsGrid(string.format("%s/images_bad/%d_%05d.png", OPT.save, START_TIME, EPOCH), NN_UTILS.toRgb(badImages, OPT.colorSpace), 7, 7, EPOCH)
-
-    -- reactivate dropout
-    modelG:training()
-    modelD:training()
-end
-
 -- Get examples to plot.
 -- Returns a list of the pattern
---  [i] Coarse/blurry image,
---  [i+1] Fine image (Coarse + true diff)
---  [i+2] Coarse + diff generated by G
---  [i+3] True diff
---  [i+4] Diff generated by G
--- @param ds Dataset as list of examples that have attributes .coarse .fine and .diff
--- @param N Number of samples to prepare
-function getSamples(ds, N)
-    --local N = N or 8
+--  [i] Image, black and white.
+--  [i+1] Image, color.
+--  [i+2] Image, color added by G.
+function getSamples()
     local N = EXAMPLE_IMAGES:size()
     local ds = EXAMPLE_IMAGES
     local noiseInputs = torch.Tensor(N, NOISE_DIM[1], NOISE_DIM[2], NOISE_DIM[3])
     local condInputs = torch.Tensor(N, COND_DIM[1], COND_DIM[2], COND_DIM[3])
-    --local gt_diff = torch.Tensor(N, 2, IMG_DIMENSIONS[2], IMG_DIMENSIONS[3])
     local gt = torch.Tensor(N, IMG_DIMENSIONS[1], IMG_DIMENSIONS[2], IMG_DIMENSIONS[3])
 
     -- Generate samples
@@ -354,7 +270,6 @@ function getSamples(ds, N)
         local example = ds[idx]
         condInputs[i] = example.grayscale:clone()
         gt[i] = example.color:clone()
-        --gt_diff[i] = example.uv:clone()
     end
     local samples = MODEL_G:forward({noiseInputs, condInputs})
 
@@ -365,13 +280,11 @@ function getSamples(ds, N)
         to_plot[#to_plot+1] = NN_UTILS.switchColorSpaceSingle(condInputs[i]:float(), "y", "rgb")
         to_plot[#to_plot+1] = gt[i]:float()
         to_plot[#to_plot+1] = withColor
-        --print(to_plot[#to_plot-2]:size(), to_plot[#to_plot-1]:size(), to_plot[#to_plot-0]:size())
-        --to_plot[#to_plot+1] = gt_diff[i]:float()
-        --to_plot[#to_plot+1] = samples[i]:float()
     end
     return to_plot
 end
 
+-- Updates the display plot.
 function visualizeProgressConditional()
     -- Show images and their refinements for the validation and training set
     --local toPlotVal = getSamples(VAL_DATA, 20)
